@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Istanbul Quiz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    .option-btn {
+      display: block;
+      width: 80%;
+      max-width: 300px;
+      margin: 10px auto;
+      padding: 10px;
+      font-size: 18px;
+      background-color: #eee;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .option-btn:hover {
+      background-color: #d0eaff;
+    }
+  </style>
+</head>
+<body>
+  <h2>Istanbul Quiz</h2>
+  <div id="nameEntry">
+    <input type="text" id="nameInput" placeholder="Enter your name" />
+    <button onclick="joinQuiz()">Join Quiz</button>
+  </div>
+
+  <div id="questionArea" style="display:none;">
+    <h3 id="questionText"></h3>
+    <div id="options"></div>
+  </div>
+
+  <div id="resultArea" style="display:none;">
+    <p id="resultText"></p>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDecxoqlRsg2jDC7E2jIRwios4St57NGy4",
+      authDomain: "dymerhealthquiz.firebaseapp.com",
+      databaseURL: "https://dymerhealthquiz-default-rtdb.europe-west1.firebasedatabase.app/",
+      projectId: "dymerhealthquiz",
+      storageBucket: "dymerhealthquiz.appspot.com",
+      messagingSenderId: "610713056223",
+      appId: "1:610713056223:web:e6b41d007924917527ca6a"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let username = "";
+    let currentIndex = -1;
+
+    function joinQuiz() {
+      username = document.getElementById("nameInput").value.trim();
+      if (!username) return alert("Please enter your name.");
+      document.getElementById("nameEntry").style.display = "none";
+      document.getElementById("questionArea").style.display = "block";
+      listenForQuestions();
+    }
+
+    function listenForQuestions() {
+      db.ref("currentQuestion").on("value", (snapshot) => {
+        const q = snapshot.val();
+        console.log("🔥 Current question from Firebase:", q); // Debug log
+
+        if (!q || q.index === currentIndex) return;
+        currentIndex = q.index;
+        showQuestion(q);
+      }, (error) => {
+        console.error("❌ Firebase read error:", error);
+      });
+    }
+
+    function showQuestion(q) {
+      document.getElementById("resultArea").style.display = "none";
+      document.getElementById("questionText").innerText = q.text;
+      const optionsDiv = document.getElementById("options");
+      optionsDiv.innerHTML = "";
+      q.options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.className = "option-btn";
+        btn.innerText = opt;
+        btn.onclick = () => submitAnswer(currentIndex, opt, q.correct);
+        optionsDiv.appendChild(btn);
+      });
+    }
+
+    function submitAnswer(index, selected, correct) {
+      db.ref("responses/" + index + "/" + username).set(selected)
+        .then(() => {
+          document.getElementById("resultArea").style.display = "block";
+          document.getElementById("resultText").innerText =
+            selected === correct
+              ? "✅ Correct!"
+              : `❌ Incorrect. Correct answer: ${correct}`;
+        })
+        .catch((err) => {
+          console.error("❌ Error writing answer to Firebase:", err);
+        });
+    }
+  </script>
+</body>
+</html>
