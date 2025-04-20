@@ -1,1 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Quiz Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+</head>
+<body>
+  <h2>Istanbul Quiz – Admin Panel</h2>
+  <textarea id="question" placeholder="Enter question text" rows="2" cols="50"></textarea><br>
+  <input id="opt1" placeholder="Option 1" />
+  <input id="opt2" placeholder="Option 2" />
+  <input id="opt3" placeholder="Option 3" />
+  <input id="opt4" placeholder="Option 4" /><br><br>
+  <input id="correct" placeholder="Correct Answer" />
+  <button onclick="sendQuestion()">Send Question</button>
 
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDecxoqlRsg2jDC7E2jIRwios4St57NGy4",
+      authDomain: "dymerhealthquiz.firebaseapp.com",
+      projectId: "dymerhealthquiz",
+      storageBucket: "dymerhealthquiz.appspot.com",
+      messagingSenderId: "610713056223",
+      appId: "1:610713056223:web:e6b41d007924917527ca6a"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let questionIndex = 0;
+
+    function sendQuestion() {
+      const q = document.getElementById("question").value;
+      const options = [
+        document.getElementById("opt1").value,
+        document.getElementById("opt2").value,
+        document.getElementById("opt3").value,
+        document.getElementById("opt4").value
+      ];
+      const correct = document.getElementById("correct").value;
+
+      const questionData = {
+        index: questionIndex++,
+        text: q,
+        options: options,
+        correct: correct
+      };
+
+      db.ref("currentQuestion").set(questionData);
+      alert("✅ Question sent!");
+    }
+  </script>
+</body>
+</html>
