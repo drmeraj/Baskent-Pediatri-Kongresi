@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Trivia Session – Join</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <h2>Trivia Session</h2>
+  <div id="entry">
+    <input id="name" placeholder="Enter your name" />
+    <button onclick="join()">Join Quiz</button>
+  </div>
+
+  <div id="questionArea" style="display:none;">
+    <h3 id="questionText"></h3>
+    <div id="options"></div>
+    <p id="timer"></p>
+    <p id="result"></p>
+  </div>
+
+  
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDecxoqlRsg2jDC7E2jIRwios4St57NGy4",
+    authDomain: "dymerhealthquiz.firebaseapp.com",
+    databaseURL: "https://dymerhealthquiz-default-rtdb.europe-west1.firebasedatabase.app/",
+    projectId: "dymerhealthquiz",
+    storageBucket: "dymerhealthquiz.appspot.com",
+    messagingSenderId: "610713056223",
+    appId: "1:610713056223:web:e6b41d007924917527ca6a"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+</script>
+
+  <script>
+    let username = "";
+    let currentIndex = -1;
+    let countdown;
+
+    function join() {
+      username = document.getElementById("name").value.trim();
+      if (!username) return alert("Please enter your name.");
+      document.getElementById("entry").style.display = "none";
+      document.getElementById("questionArea").style.display = "block";
+      listenForQuestions();
+    }
+
+    function listenForQuestions() {
+      db.ref("currentQuestion").on("value", (snap) => {
+        const q = snap.val();
+        if (!q || q.index === currentIndex) return;
+        currentIndex = q.index;
+        showQuestion(q);
+      });
+    }
+
+    function showQuestion(q) {
+      document.getElementById("result").innerText = "";
+      document.getElementById("questionText").innerText = q.text;
+      const optDiv = document.getElementById("options");
+      optDiv.innerHTML = "";
+
+      q.options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.innerText = opt;
+        btn.onclick = () => answer(q.index, opt, q.correct);
+        optDiv.appendChild(btn);
+      });
+
+      let seconds = 20;
+      document.getElementById("timer").innerText = `⏱ ${seconds}s`;
+      clearInterval(countdown);
+      countdown = setInterval(() => {
+        seconds--;
+        document.getElementById("timer").innerText = `⏱ ${seconds}s`;
+        if (seconds === 0) {
+          clearInterval(countdown);
+          Array.from(optDiv.children).forEach(btn => btn.disabled = true);
+          document.getElementById("timer").innerText = "⛔ Time's up!";
+        }
+      }, 1000);
+    }
+
+    function answer(index, selected, correct) {
+      const scoreRef = db.ref("scores/" + username);
+      if (selected === correct) {
+        scoreRef.transaction(score => (score || 0) + 1);
+        document.getElementById("result").innerText = "✅ Correct!";
+      } else {
+        document.getElementById("result").innerText = "❌ Incorrect. Correct: " + correct;
+      }
+      db.ref("responses/" + index + "/" + username).set(selected);
+    }
+  </script>
+</body>
+</html>
