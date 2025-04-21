@@ -8,6 +8,15 @@
 </head>
 <body>
   <h2>Istanbul Quiz – Admin Panel</h2>
+
+  <select id="category">
+    <option>COĞRAFYA</option>
+    <option>GENEL KÜLTÜR</option>
+    <option>DÜNYA MUTFAĞI</option>
+    <option>SPOR BİLGİ</option>
+    <option>FİNAL</option>
+  </select><br><br>
+
   <textarea id="question" placeholder="Enter question text" rows="2" cols="50"></textarea><br>
   <input id="opt1" placeholder="Option 1" />
   <input id="opt2" placeholder="Option 2" />
@@ -20,6 +29,7 @@
     const firebaseConfig = {
       apiKey: "AIzaSyDecxoqlRsg2jDC7E2jIRwios4St57NGy4",
       authDomain: "dymerhealthquiz.firebaseapp.com",
+      databaseURL: "https://dymerhealthquiz-default-rtdb.europe-west1.firebasedatabase.app/",
       projectId: "dymerhealthquiz",
       storageBucket: "dymerhealthquiz.appspot.com",
       messagingSenderId: "610713056223",
@@ -32,6 +42,7 @@
     let questionIndex = 0;
 
     function sendQuestion() {
+      const category = document.getElementById("category").value;
       const q = document.getElementById("question").value;
       const options = [
         document.getElementById("opt1").value,
@@ -41,15 +52,33 @@
       ];
       const correct = document.getElementById("correct").value;
 
+      if (!q || options.some(opt => !opt) || !correct) {
+        alert("Please fill in all fields.");
+        return;
+      }
+
       const questionData = {
         index: questionIndex++,
+        category: category,
         text: q,
         options: options,
         correct: correct
       };
 
       db.ref("currentQuestion").set(questionData);
-      alert("✅ Question sent!");
+      db.ref("questions").push(questionData);
+
+      alert("✅ Question sent and stored!");
+      clearForm();
+    }
+
+    function clearForm() {
+      document.getElementById("question").value = "";
+      document.getElementById("opt1").value = "";
+      document.getElementById("opt2").value = "";
+      document.getElementById("opt3").value = "";
+      document.getElementById("opt4").value = "";
+      document.getElementById("correct").value = "";
     }
   </script>
 </body>
